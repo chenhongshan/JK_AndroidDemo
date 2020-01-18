@@ -10,12 +10,73 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "mips", "mips64", "x86", "x86_64"
+        }
+        // Enabling multidex support.
+        multiDexEnabled true
+    }
+    signingConfigs {
+        release {
+            keyAlias 'demos'
+            keyPassword '111111'
+            storeFile file('../demos')
+            storePassword '111111'
+        }
+    }
+    dexOptions {
+        jumboMode true
     }
     buildTypes {
-        release {
+        debug {
             minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            //新名字
+            def newName
+            //输出文件夹
+            def outDirectory
+            //是否为Jenkins打包，输出路径不同
+            if ("true".equals(IS_JENKINS)) {
+                //BUILD_PATH为服务器输出路径
+                outDirectory = BUILD_PATH
+                newName = "demo" + "-" + defaultConfig.versionName + "-" + BUILD_TYPE + ".apk"
+            } else {
+                outDirectory = output.outputFile.getParent()
+                newName = "demo" + "-" + defaultConfig.versionName + "-" + BUILD_TYPE + ".apk"
+            }
+            outputFileName =newName
+        }
+    }
+    flavorDimensions("channel")
+    productFlavors {
+        yingyongbao { dimension "channel" }
+    }
+    productFlavors.all {
+        flavor -> flavor.manifestPlaceholders = [CHANNEL_VALUE: name]
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LGPL2.1'
     }
 }
 
